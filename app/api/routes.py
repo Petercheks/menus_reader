@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, File, Header, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel
 
 from app.core.config import ProviderName, get_settings
@@ -12,13 +12,18 @@ from app.core.exceptions import (
     UnknownProviderError,
 )
 from app.core.logging import get_logger
+from app.core.security import verify_api_key
 from app.models.menu import ExtractedMenu
 from app.providers.factory import get_provider, resolve_provider_name
 from app.services.extraction import MenuExtractionService
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/api/v1", tags=["extraction"])
+router = APIRouter(
+    prefix="/api/v1",
+    tags=["extraction"],
+    dependencies=[Depends(verify_api_key)],
+)
 health_router = APIRouter(tags=["health"])
 
 

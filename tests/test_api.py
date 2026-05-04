@@ -10,10 +10,15 @@ from app.main import app
 from app.models.menu import Currency, ExtractedMenu, MenuMetadata, Promotion
 
 
+TEST_API_KEY = "test-app-key"
+AUTH_HEADERS = {"X-API-Key": TEST_API_KEY}
+
+
 @pytest.fixture(autouse=True)
 def configure_env(monkeypatch: pytest.MonkeyPatch) -> None:
     get_settings.cache_clear()
     monkeypatch.setenv("DEFAULT_PROVIDER", "openai")
+    monkeypatch.setenv("API_KEY", TEST_API_KEY)
     monkeypatch.setenv("OPENAI_API_KEY", "test-openai")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic")
     monkeypatch.setenv("GEMINI_API_KEY", "")
@@ -72,6 +77,7 @@ def test_extract_endpoint_uses_provider(
         response = client.post(
             "/api/v1/extract",
             files={"file": ("menu.jpg", jpeg_upload, "image/jpeg")},
+            headers=AUTH_HEADERS,
         )
 
     assert response.status_code == 200
@@ -84,6 +90,7 @@ def test_extract_rejects_empty_file(client: TestClient) -> None:
     response = client.post(
         "/api/v1/extract",
         files={"file": ("empty.jpg", b"", "image/jpeg")},
+        headers=AUTH_HEADERS,
     )
     assert response.status_code == 400
 
@@ -92,6 +99,7 @@ def test_extract_rejects_unconfigured_provider(client: TestClient, jpeg_upload: 
     response = client.post(
         "/api/v1/extract?provider=gemini",
         files={"file": ("menu.jpg", jpeg_upload, "image/jpeg")},
+        headers=AUTH_HEADERS,
     )
     assert response.status_code == 503
 
@@ -100,8 +108,26 @@ def test_extract_rejects_unknown_provider(client: TestClient, jpeg_upload: bytes
     response = client.post(
         "/api/v1/extract?provider=foobar",
         files={"file": ("menu.jpg", jpeg_upload, "image/jpeg")},
+        headers=AUTH_HEADERS,
     )
     assert response.status_code == 400
+
+
+def test_extract_rejects_missing_api_key(client: TestClient, jpeg_upload: bytes) -> None:
+    response = client.post(
+        "/api/v1/extract",
+        files={"file": ("menu.jpg", jpeg_upload, "image/jpeg")},
+    )
+    assert response.status_code == 401
+
+
+def test_extract_rejects_invalid_api_key(client: TestClient, jpeg_upload: bytes) -> None:
+    response = client.post(
+        "/api/v1/extract",
+        files={"file": ("menu.jpg", jpeg_upload, "image/jpeg")},
+        headers={"X-API-Key": "wrong-key"},
+    )
+    assert response.status_code == 401
 
 
 def test_batch_extract_returns_multiple(
@@ -119,6 +145,7 @@ def test_batch_extract_returns_multiple(
                 ("files", ("a.jpg", jpeg_upload, "image/jpeg")),
                 ("files", ("b.jpg", jpeg_upload, "image/jpeg")),
             ],
+            headers=AUTH_HEADERS,
         )
 
     assert response.status_code == 200

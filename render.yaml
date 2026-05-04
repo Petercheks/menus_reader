@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: menu-reader
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: DEFAULT_PROVIDER
+        value: openai
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MAX_IMAGE_MB
+        value: 10
+      - key: MAX_IMAGE_DIMENSION
+        value: 2048
+      - key: REQUEST_TIMEOUT_SECONDS
+        value: 120
+      - key: API_KEY
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false

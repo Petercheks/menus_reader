@@ -57,6 +57,21 @@ docker run -p 8000:8000 --env-file .env menu-reader
 | GET    | `/health`               | Estado del servicio y proveedores configurados. |
 | GET    | `/docs`                 | Swagger UI.                                  |
 
+### Autenticacion
+
+Todas las rutas bajo `/api/v1` requieren el header `X-API-Key` con el valor configurado en `API_KEY` dentro del archivo `.env`. La ruta `/health` queda publica para chequeos de disponibilidad.
+
+```bash
+curl -X POST http://localhost:8000/api/v1/extract \
+  -F "file=@menu.jpg" \
+  -H "X-API-Key: $API_KEY"
+```
+
+Codigos de error:
+
+- `401 Unauthorized`: el header falta o el valor no coincide.
+- `503 Service Unavailable`: la variable `API_KEY` no esta configurada en el servidor.
+
 ### Seleccion de proveedor
 
 Por query param o header HTTP. Si no se especifica, se usa `DEFAULT_PROVIDER`.
@@ -64,12 +79,14 @@ Por query param o header HTTP. Si no se especifica, se usa `DEFAULT_PROVIDER`.
 ```bash
 curl -X POST http://localhost:8000/api/v1/extract \
   -F "file=@menu.jpg" \
+  -H "X-API-Key: $API_KEY" \
   -H "X-LLM-Provider: anthropic"
 ```
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/extract?provider=gemini" \
-  -F "file=@menu.jpg"
+  -F "file=@menu.jpg" \
+  -H "X-API-Key: $API_KEY"
 ```
 
 ### Ejemplo de respuesta

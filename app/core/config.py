@@ -17,6 +17,8 @@ class Settings(BaseSettings):
 
     default_provider: ProviderName = "openai"
 
+    api_key: str | None = None
+
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-2024-08-06"
 
