@@ -41,7 +41,7 @@ class GeminiProvider(MenuExtractor):
 
         text = response.text or ""
         if not text:
-            raise InvalidExtractionResultError(self.name, "respuesta vacia")
+            raise InvalidExtractionResultError(self.name, "empty response")
         try:
             return ExtractedMenu.model_validate_json(text)
         except ValidationError as exc:

@@ -30,53 +30,53 @@ class Currency(StrEnum):
 class MenuItemVariant(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(description="Nombre del tamano o variante (ej: 'Pequena', 'Grande')")
-    price: float = Field(description="Precio numerico de la variante")
-    currency: Currency = Field(description="Moneda detectada")
+    name: str = Field(description="Name of the size or variant (e.g. 'Small', 'Large')")
+    price: float = Field(description="Numeric price of the variant")
+    currency: Currency = Field(description="Detected currency")
 
 
 class MenuItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(description="Nombre del producto tal como aparece en el menu")
+    name: str = Field(description="Product name as it appears in the menu")
     description: str | None = Field(
         default=None,
-        description="Descripcion o ingredientes si esta presente, null si no aparece",
+        description="Description or ingredients if present, null if not shown",
     )
     price: float | None = Field(
         default=None,
-        description="Precio numerico. Null si tiene varias variantes o no es legible",
+        description="Numeric price. Null if it has multiple variants or is not legible",
     )
     currency: Currency = Field(
         default=Currency.UNKNOWN,
-        description="Moneda detectada para el precio principal",
+        description="Detected currency for the main price",
     )
     variants: list[MenuItemVariant] = Field(
         default_factory=list,
-        description="Variantes con precio propio (ej: tamanos), vacio si no aplica",
+        description="Variants with their own price (e.g. sizes), empty if not applicable",
     )
 
 
 class Category(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(description="Nombre de la categoria (ej: 'Parrillas', 'Hamburguesas')")
-    items: list[MenuItem] = Field(description="Items pertenecientes a la categoria")
+    name: str = Field(description="Category name (e.g. 'Grills', 'Burgers')")
+    items: list[MenuItem] = Field(description="Items belonging to the category")
 
 
 class Promotion(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(description="Titulo de la promocion o combo")
+    name: str = Field(description="Promotion or combo title")
     description: str | None = Field(
         default=None,
-        description="Descripcion adicional si existe, null si no",
+        description="Additional description if present, null otherwise",
     )
     includes: list[str] = Field(
-        description="Componentes que incluye la promocion (ej: '2 Jumbos', '1 Refresco de Litro')"
+        description="Components included in the promotion (e.g. '2 Jumbos', '1 Liter Soda')"
     )
-    price: float = Field(description="Precio total de la promocion")
-    currency: Currency = Field(description="Moneda detectada")
+    price: float = Field(description="Total price of the promotion")
+    currency: Currency = Field(description="Detected currency")
 
 
 class MenuMetadata(BaseModel):
@@ -84,31 +84,31 @@ class MenuMetadata(BaseModel):
 
     restaurant_name: str | None = Field(
         default=None,
-        description="Nombre del restaurante si es visible, null si no",
+        description="Restaurant name if visible, null otherwise",
     )
     phone: str | None = Field(
         default=None,
-        description="Telefono o canal de contacto visible, null si no",
+        description="Phone or visible contact channel, null otherwise",
     )
     payment_methods: list[str] = Field(
         default_factory=list,
-        description="Metodos de pago listados (ej: 'Pago Movil', 'Bancamiga')",
+        description="Listed payment methods (e.g. 'Pago Movil', 'Bancamiga')",
     )
 
 
 class ExtractedMenu(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    metadata: MenuMetadata = Field(description="Datos del establecimiento extraidos del menu")
+    metadata: MenuMetadata = Field(description="Establishment data extracted from the menu")
     categories: list[Category] = Field(
         default_factory=list,
-        description="Categorias del menu con sus items individuales",
+        description="Menu categories with their individual items",
     )
     promotions: list[Promotion] = Field(
         default_factory=list,
-        description="Promociones, combos o paquetes especiales",
+        description="Promotions, combos or special bundles",
     )
     notes: str | None = Field(
         default=None,
-        description="Observaciones del extractor sobre legibilidad u otros detalles, null si no",
+        description="Extractor remarks about legibility or other details, null otherwise",
     )

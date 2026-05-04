@@ -1,7 +1,7 @@
 [project]
 name = "menu-reader"
 version = "0.1.0"
-description = "Microservicio para extraer informacion estructurada de imagenes de menus de restaurantes usando LLM Vision"
+description = "Microservice for extracting structured information from restaurant menu images using LLM Vision"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -38,7 +38,7 @@ select = ["E", "F", "W", "I", "B", "UP", "N"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 markers = [
-    "live: requiere API keys reales y conexion a los proveedores LLM",
+    "live: requires real API keys and connection to the LLM providers",
 ]
 testpaths = ["tests"]
 

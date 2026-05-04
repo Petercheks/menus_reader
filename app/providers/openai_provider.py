@@ -37,6 +37,6 @@ class OpenAIProvider(MenuExtractor):
 
         parsed = response.output_parsed
         if parsed is None:
-            refusal = getattr(response, "output_text", None) or "respuesta vacia"
+            refusal = getattr(response, "output_text", None) or "empty response"
             raise InvalidExtractionResultError(self.name, refusal)
         return parsed

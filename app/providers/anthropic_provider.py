@@ -11,7 +11,7 @@ from app.services.image_processing import ProcessedImage
 
 EXTRACTION_TOOL_NAME = "submit_menu_extraction"
 EXTRACTION_TOOL_DESCRIPTION = (
-    "Devuelve el menu extraido como JSON estructurado segun el esquema dado."
+    "Returns the extracted menu as structured JSON matching the given schema."
 )
 
 
@@ -61,7 +61,7 @@ class AnthropicProvider(MenuExtractor):
             None,
         )
         if tool_block is None:
-            raise InvalidExtractionResultError(self.name, "no se devolvio tool_use")
+            raise InvalidExtractionResultError(self.name, "no tool_use was returned")
 
         try:
             return ExtractedMenu.model_validate(tool_block.input)

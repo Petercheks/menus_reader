@@ -18,7 +18,7 @@ def _available_providers() -> list[ProviderName]:
 @pytest.mark.parametrize("provider", _available_providers())
 async def test_extract_real_menu(provider: ProviderName, real_menu_paths: list[Path]) -> None:
     if not real_menu_paths:
-        pytest.skip("No hay imagenes reales en tests/fixtures")
+        pytest.skip("No real images in tests/fixtures")
 
     extractor = get_provider(provider)
     service = MenuExtractionService(extractor)
@@ -32,13 +32,13 @@ async def test_extract_real_menu(provider: ProviderName, real_menu_paths: list[P
         len(result.categories) > 0
         or len(result.promotions) > 0
         or result.metadata.restaurant_name is not None
-    ), f"El proveedor {provider} no extrajo informacion util de {sample.name}"
+    ), f"Provider {provider} did not extract useful information from {sample.name}"
 
 
 @pytest.mark.parametrize("provider", _available_providers())
 async def test_extract_all_real_menus(provider: ProviderName, real_menu_paths: list[Path]) -> None:
     if not real_menu_paths:
-        pytest.skip("No hay imagenes reales en tests/fixtures")
+        pytest.skip("No real images in tests/fixtures")
 
     extractor = get_provider(provider)
     service = MenuExtractionService(extractor)
@@ -46,4 +46,4 @@ async def test_extract_all_real_menus(provider: ProviderName, real_menu_paths: l
     for path in real_menu_paths:
         content = path.read_bytes()
         result = await service.extract_from_bytes(content, "image/png")
-        assert isinstance(result, ExtractedMenu), f"{provider} fallo en {path.name}"
+        assert isinstance(result, ExtractedMenu), f"{provider} failed on {path.name}"

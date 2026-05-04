@@ -1,41 +1,41 @@
 # Menu Reader
 
-Microservicio HTTP que recibe imagenes de menus de restaurantes y devuelve un JSON estructurado con categorias, items, descripciones, precios, monedas y promociones, usando LLM Vision con interfaz multi-proveedor (OpenAI, Anthropic, Gemini).
+HTTP microservice that receives images of restaurant menus and returns structured JSON with categories, items, descriptions, prices, currencies, and promotions, using LLM Vision with a multi-provider interface (OpenAI, Anthropic, Gemini).
 
-## Caracteristicas
+## Features
 
 - Stack: Python 3.11+, FastAPI, Pydantic v2.
-- Multi-proveedor LLM intercambiable (OpenAI, Anthropic, Google Gemini).
-- Salida estructurada validada con Pydantic.
-- Soporte de extraccion individual o por lotes.
-- Reescalado y validacion de imagenes.
-- Reintentos automaticos con backoff.
-- Listo para contenedor Docker.
+- Pluggable multi-provider LLM (OpenAI, Anthropic, Google Gemini).
+- Structured output validated with Pydantic.
+- Single or batch extraction support.
+- Image rescaling and validation.
+- Automatic retries with backoff.
+- Docker container ready.
 
-## Requisitos
+## Requirements
 
-- Python 3.11 o superior.
-- `uv` (recomendado) o `pip`.
-- Al menos una API key de los proveedores soportados.
+- Python 3.11 or higher.
+- `uv` (recommended) or `pip`.
+- At least one API key from the supported providers.
 
-## Instalacion
+## Installation
 
 ```bash
 uv sync
 cp .env.example .env
 ```
 
-Edita `.env` y agrega al menos una API key.
+Edit `.env` and add at least one API key.
 
-## Ejecucion (desarrollo)
+## Run (development)
 
 ```bash
 uv run fastapi dev
 ```
 
-La documentacion interactiva estara en `http://localhost:8000/docs`.
+Interactive documentation will be available at `http://localhost:8000/docs`.
 
-## Ejecucion (produccion)
+## Run (production)
 
 ```bash
 uv run fastapi run
@@ -50,16 +50,16 @@ docker run -p 8000:8000 --env-file .env menu-reader
 
 ## Endpoints
 
-| Metodo | Ruta                    | Descripcion                                  |
-| ------ | ----------------------- | -------------------------------------------- |
-| POST   | `/api/v1/extract`       | Procesa una imagen y devuelve `ExtractedMenu`. |
-| POST   | `/api/v1/extract/batch` | Procesa multiples imagenes en paralelo.      |
-| GET    | `/health`               | Estado del servicio y proveedores configurados. |
-| GET    | `/docs`                 | Swagger UI.                                  |
+| Method | Path                    | Description                                     |
+| ------ | ----------------------- | ----------------------------------------------- |
+| POST   | `/api/v1/extract`       | Processes an image and returns `ExtractedMenu`. |
+| POST   | `/api/v1/extract/batch` | Processes multiple images in parallel.          |
+| GET    | `/health`               | Service status and configured providers.        |
+| GET    | `/docs`                 | Swagger UI.                                     |
 
-### Autenticacion
+### Authentication
 
-Todas las rutas bajo `/api/v1` requieren el header `X-API-Key` con el valor configurado en `API_KEY` dentro del archivo `.env`. La ruta `/health` queda publica para chequeos de disponibilidad.
+All routes under `/api/v1` require the `X-API-Key` header with the value configured in `API_KEY` inside the `.env` file. The `/health` route remains public for availability checks.
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/extract \
@@ -67,14 +67,14 @@ curl -X POST http://localhost:8000/api/v1/extract \
   -H "X-API-Key: $API_KEY"
 ```
 
-Codigos de error:
+Error codes:
 
-- `401 Unauthorized`: el header falta o el valor no coincide.
-- `503 Service Unavailable`: la variable `API_KEY` no esta configurada en el servidor.
+- `401 Unauthorized`: the header is missing or its value does not match.
+- `503 Service Unavailable`: the `API_KEY` variable is not configured on the server.
 
-### Seleccion de proveedor
+### Provider selection
 
-Por query param o header HTTP. Si no se especifica, se usa `DEFAULT_PROVIDER`.
+Via query param or HTTP header. If not specified, `DEFAULT_PROVIDER` is used.
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/extract \
@@ -89,11 +89,11 @@ curl -X POST "http://localhost:8000/api/v1/extract?provider=gemini" \
   -H "X-API-Key: $API_KEY"
 ```
 
-### Forzar moneda en la respuesta
+### Force currency in the response
 
-El query param opcional `currency` permite sobreescribir la moneda detectada en items, variantes y promociones. Si se omite, se conserva la moneda detectada por el LLM.
+The optional `currency` query param overrides the detected currency on items, variants, and promotions. If omitted, the currency detected by the LLM is preserved.
 
-Valores soportados (ISO 4217): `USD`, `EUR`, `ARS`, `BOB`, `BRL`, `CLP`, `COP`, `CRC`, `CUP`, `DOP`, `GTQ`, `HNL`, `HTG`, `MXN`, `NIO`, `PAB`, `PEN`, `PYG`, `UYU`, `VES`, `UNKNOWN`.
+Supported values (ISO 4217): `USD`, `EUR`, `ARS`, `BOB`, `BRL`, `CLP`, `COP`, `CRC`, `CUP`, `DOP`, `GTQ`, `HNL`, `HTG`, `MXN`, `NIO`, `PAB`, `PEN`, `PYG`, `UYU`, `VES`, `UNKNOWN`.
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/extract?currency=ARS" \
@@ -101,7 +101,7 @@ curl -X POST "http://localhost:8000/api/v1/extract?currency=ARS" \
   -H "X-API-Key: $API_KEY"
 ```
 
-### Ejemplo de respuesta
+### Example response
 
 ```json
 {
@@ -137,7 +137,7 @@ curl -X POST "http://localhost:8000/api/v1/extract?currency=ARS" \
 uv run pytest
 ```
 
-Para ejecutar los tests E2E con APIs reales (requiere keys configuradas):
+To run the E2E tests against real APIs (requires keys to be configured):
 
 ```bash
 uv run pytest -m live

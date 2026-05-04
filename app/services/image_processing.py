@@ -37,10 +37,10 @@ def _validate_size(content: bytes) -> None:
     max_bytes = settings.max_image_mb * 1024 * 1024
     if len(content) > max_bytes:
         raise InvalidImageError(
-            f"La imagen supera el tamano maximo permitido ({settings.max_image_mb} MB)"
+            f"Image exceeds the maximum allowed size ({settings.max_image_mb} MB)"
         )
     if not content:
-        raise InvalidImageError("El archivo esta vacio")
+        raise InvalidImageError("The file is empty")
 
 
 def _open_image(content: bytes) -> Image.Image:
@@ -49,7 +49,7 @@ def _open_image(content: bytes) -> Image.Image:
         image.load()
         return image
     except (UnidentifiedImageError, OSError) as exc:
-        raise InvalidImageError("No se pudo leer la imagen, formato invalido") from exc
+        raise InvalidImageError("Unable to read the image, invalid format") from exc
 
 
 def _normalize_mime(mime_type: str | None, image: Image.Image) -> str:
@@ -57,16 +57,16 @@ def _normalize_mime(mime_type: str | None, image: Image.Image) -> str:
         normalized = mime_type.lower()
         if normalized not in ALLOWED_MIME_TYPES:
             raise InvalidImageError(
-                f"Tipo de imagen no soportado: '{mime_type}'. "
-                f"Permitidos: {', '.join(sorted(ALLOWED_MIME_TYPES))}"
+                f"Unsupported image type: '{mime_type}'. "
+                f"Allowed: {', '.join(sorted(ALLOWED_MIME_TYPES))}"
             )
         return normalized
     inferred = PIL_FORMAT_TO_MIME.get(image.format or "")
     if inferred:
         return inferred
     raise InvalidImageError(
-        f"No se pudo determinar el tipo de imagen. "
-        f"Permitidos: {', '.join(sorted(ALLOWED_MIME_TYPES))}"
+        f"Unable to determine the image type. "
+        f"Allowed: {', '.join(sorted(ALLOWED_MIME_TYPES))}"
     )
 
 

@@ -21,8 +21,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="Menu Reader",
     description=(
-        "Microservicio de extraccion estructurada de menus de restaurantes "
-        "a partir de imagenes, con LLM Vision multi-proveedor."
+        "Microservice for structured extraction of restaurant menus "
+        "from images, using multi-provider LLM Vision."
     ),
     version="0.1.0",
     lifespan=lifespan,

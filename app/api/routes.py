@@ -95,10 +95,10 @@ def _handle_extraction_errors(exc: Exception, provider_name: str) -> HTTPExcepti
 )
 async def extract_menu(
     file: Annotated[UploadFile, File(description="Menu image (jpg, png, webp)")],
-    provider: Annotated[str | None, Query(description="Proveedor LLM a usar")] = None,
+    provider: Annotated[str | None, Query(description="LLM provider to use")] = None,
     currency: Annotated[
         Currency | None,
-        Query(description="Forzar moneda en la respuesta. Si se omite, se detecta de la imagen"),
+        Query(description="Force currency in the response. If omitted, detected from the image"),
     ] = None,
     x_llm_provider: Annotated[str | None, Header()] = None,
 ) -> ExtractedMenu:
@@ -118,10 +118,10 @@ async def extract_menu(
 )
 async def extract_menus_batch(
     files: Annotated[list[UploadFile], File(description="Menu images")],
-    provider: Annotated[str | None, Query(description="Proveedor LLM a usar")] = None,
+    provider: Annotated[str | None, Query(description="LLM provider to use")] = None,
     currency: Annotated[
         Currency | None,
-        Query(description="Forzar moneda en la respuesta. Si se omite, se detecta de la imagen"),
+        Query(description="Force currency in the response. If omitted, detected from the image"),
     ] = None,
     x_llm_provider: Annotated[str | None, Header()] = None,
 ) -> BatchExtractionResponse:
