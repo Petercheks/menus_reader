@@ -11,7 +11,7 @@ from tenacity import (
 
 from app.core.exceptions import InvalidExtractionResultError, ProviderCallError
 from app.core.logging import get_logger
-from app.models.menu import ExtractedMenu
+from app.models.menu import Currency, ExtractedMenu
 from app.providers.base import MenuExtractor
 from app.services.image_processing import ProcessedImage, process_image
 
@@ -30,17 +30,22 @@ class MenuExtractionService:
         self,
         content: bytes,
         mime_type: str | None = None,
+        currency_override: Currency | None = None,
     ) -> ExtractedMenu:
         image = process_image(content, mime_type)
-        return await self._extract_with_retry(image)
+        result = await self._extract_with_retry(image)
+        if currency_override is not None:
+            return _apply_currency_override(result, currency_override)
+        return result
 
     async def extract_many(
         self,
         items: Sequence[tuple[bytes, str | None]],
+        currency_override: Currency | None = None,
     ) -> list[ExtractedMenu]:
         async def run(payload: tuple[bytes, str | None]) -> ExtractedMenu:
             content, mime = payload
-            return await self.extract_from_bytes(content, mime)
+            return await self.extract_from_bytes(content, mime, currency_override)
 
         return await asyncio.gather(*(run(item) for item in items))
 
@@ -72,3 +77,33 @@ class MenuExtractionService:
             raise exc.last_attempt.exception() from exc
 
         raise RuntimeError("Unreachable: AsyncRetrying terminated without yielding")
+
+
+def _apply_currency_override(menu: ExtractedMenu, currency: Currency) -> ExtractedMenu:
+    return menu.model_copy(
+        update={
+            "categories": [
+                category.model_copy(
+                    update={
+                        "items": [
+                            item.model_copy(
+                                update={
+                                    "currency": currency,
+                                    "variants": [
+                                        variant.model_copy(update={"currency": currency})
+                                        for variant in item.variants
+                                    ],
+                                }
+                            )
+                            for item in category.items
+                        ]
+                    }
+                )
+                for category in menu.categories
+            ],
+            "promotions": [
+                promotion.model_copy(update={"currency": currency})
+                for promotion in menu.promotions
+            ],
+        }
+    )

@@ -7,8 +7,15 @@ from PIL import Image
 
 from app.core.config import get_settings
 from app.main import app
-from app.models.menu import Currency, ExtractedMenu, MenuMetadata, Promotion
-
+from app.models.menu import (
+    Category,
+    Currency,
+    ExtractedMenu,
+    MenuItem,
+    MenuItemVariant,
+    MenuMetadata,
+    Promotion,
+)
 
 TEST_API_KEY = "test-app-key"
 AUTH_HEADERS = {"X-API-Key": TEST_API_KEY}
@@ -35,7 +42,22 @@ def client() -> TestClient:
 def fake_menu() -> ExtractedMenu:
     return ExtractedMenu(
         metadata=MenuMetadata(restaurant_name="Test Resto"),
-        categories=[],
+        categories=[
+            Category(
+                name="Parrillas",
+                items=[
+                    MenuItem(
+                        name="Mix",
+                        price=4320,
+                        currency=Currency.VES,
+                        variants=[
+                            MenuItemVariant(name="Pequena", price=1890, currency=Currency.VES),
+                            MenuItemVariant(name="Grande", price=4050, currency=Currency.VES),
+                        ],
+                    ),
+                ],
+            )
+        ],
         promotions=[
             Promotion(
                 name="Combo",
@@ -151,3 +173,81 @@ def test_batch_extract_returns_multiple(
     assert response.status_code == 200
     body = response.json()
     assert len(body["results"]) == 2
+
+
+def test_extract_overrides_currency_when_provided(
+    client: TestClient, fake_menu: ExtractedMenu, jpeg_upload: bytes
+) -> None:
+    with patch("app.providers.factory._cached") as cached:
+        provider = AsyncMock()
+        provider.name = "openai"
+        provider.extract = AsyncMock(return_value=fake_menu)
+        cached.return_value = provider
+
+        response = client.post(
+            "/api/v1/extract?currency=VES",
+            files={"file": ("menu.jpg", jpeg_upload, "image/jpeg")},
+            headers=AUTH_HEADERS,
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["promotions"][0]["currency"] == "VES"
+    assert body["categories"][0]["items"][0]["currency"] == "VES"
+    for variant in body["categories"][0]["items"][0]["variants"]:
+        assert variant["currency"] == "VES"
+
+
+def test_extract_keeps_detected_currency_when_not_provided(
+    client: TestClient, fake_menu: ExtractedMenu, jpeg_upload: bytes
+) -> None:
+    with patch("app.providers.factory._cached") as cached:
+        provider = AsyncMock()
+        provider.name = "openai"
+        provider.extract = AsyncMock(return_value=fake_menu)
+        cached.return_value = provider
+
+        response = client.post(
+            "/api/v1/extract",
+            files={"file": ("menu.jpg", jpeg_upload, "image/jpeg")},
+            headers=AUTH_HEADERS,
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["promotions"][0]["currency"] == "USD"
+    assert body["categories"][0]["items"][0]["currency"] == "VES"
+
+
+def test_extract_rejects_invalid_currency(client: TestClient, jpeg_upload: bytes) -> None:
+    response = client.post(
+        "/api/v1/extract?currency=XYZ",
+        files={"file": ("menu.jpg", jpeg_upload, "image/jpeg")},
+        headers=AUTH_HEADERS,
+    )
+    assert response.status_code == 422
+
+
+def test_batch_extract_overrides_currency(
+    client: TestClient, fake_menu: ExtractedMenu, jpeg_upload: bytes
+) -> None:
+    with patch("app.providers.factory._cached") as cached:
+        provider = AsyncMock()
+        provider.name = "openai"
+        provider.extract = AsyncMock(return_value=fake_menu)
+        cached.return_value = provider
+
+        response = client.post(
+            "/api/v1/extract/batch?currency=USD",
+            files=[
+                ("files", ("a.jpg", jpeg_upload, "image/jpeg")),
+                ("files", ("b.jpg", jpeg_upload, "image/jpeg")),
+            ],
+            headers=AUTH_HEADERS,
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    for result in body["results"]:
+        assert result["promotions"][0]["currency"] == "USD"
+        assert result["categories"][0]["items"][0]["currency"] == "USD"

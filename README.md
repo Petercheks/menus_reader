@@ -89,6 +89,18 @@ curl -X POST "http://localhost:8000/api/v1/extract?provider=gemini" \
   -H "X-API-Key: $API_KEY"
 ```
 
+### Forzar moneda en la respuesta
+
+El query param opcional `currency` permite sobreescribir la moneda detectada en items, variantes y promociones. Si se omite, se conserva la moneda detectada por el LLM.
+
+Valores soportados (ISO 4217): `USD`, `EUR`, `ARS`, `BOB`, `BRL`, `CLP`, `COP`, `CRC`, `CUP`, `DOP`, `GTQ`, `HNL`, `HTG`, `MXN`, `NIO`, `PAB`, `PEN`, `PYG`, `UYU`, `VES`, `UNKNOWN`.
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/extract?currency=ARS" \
+  -F "file=@menu.jpg" \
+  -H "X-API-Key: $API_KEY"
+```
+
 ### Ejemplo de respuesta
 
 ```json

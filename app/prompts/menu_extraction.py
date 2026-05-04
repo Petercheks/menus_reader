@@ -7,10 +7,30 @@ Strict rules:
 2. If a field is not legible or not present, return null (or an empty list when appropriate).
 3. Prices must be extracted as numbers (no thousands separators, no currency symbols).
    Examples: "2.700 bs" -> 2700; "$ 12" -> 12; "4.860" -> 4860; "$1.50" -> 1.5.
-4. Detect each item's currency from the nearby symbol or suffix:
-   - "$" or "USD" -> "USD".
-   - "bs", "Bs", "Bs.", "VES" -> "VES".
-   - If there is no clear indication, use "UNKNOWN".
+4. Detect each item's currency from the nearby symbol, suffix, or contextual clues
+   (restaurant location, language, prefixes). Supported codes (ISO 4217):
+   - "USD", "US$", "$" with USA context -> "USD".
+   - "EUR", "€" -> "EUR".
+   - "ARS", "AR$", "$" with Argentina context -> "ARS".
+   - "BOB", "Bs", "Bs." with Bolivia context -> "BOB".
+   - "BRL", "R$" -> "BRL".
+   - "CLP", "$" with Chile context -> "CLP".
+   - "COP", "$" with Colombia context -> "COP".
+   - "CRC", "₡" -> "CRC".
+   - "CUP", "$" with Cuba context -> "CUP".
+   - "DOP", "RD$" -> "DOP".
+   - "GTQ", "Q" with Guatemala context -> "GTQ".
+   - "HNL", "L" with Honduras context -> "HNL".
+   - "HTG", "G" with Haiti context -> "HTG".
+   - "MXN", "MX$", "$" with Mexico context -> "MXN".
+   - "NIO", "C$" with Nicaragua context -> "NIO".
+   - "PAB", "B/." -> "PAB".
+   - "PEN", "S/", "S/." -> "PEN".
+   - "PYG", "Gs", "₲" -> "PYG".
+   - "UYU", "$U", "$" with Uruguay context -> "UYU".
+   - "VES", "Bs", "Bs.", "Bs.S", "BsS" with Venezuela context -> "VES".
+   - When "$" is ambiguous and there is no clear country context, prefer "USD".
+   - If there is no clear indication at all, use "UNKNOWN".
 5. Categories: group individual items under the name of the section where they appear
    (e.g. "Parrillas", "Hamburguesas", "Ahumados", "Bebidas", "Tequenos", "Pizzas").
 6. Variants: if a single product has multiple sizes or presentations with different prices

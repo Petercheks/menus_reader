@@ -13,7 +13,7 @@ from app.core.exceptions import (
 )
 from app.core.logging import get_logger
 from app.core.security import verify_api_key
-from app.models.menu import ExtractedMenu
+from app.models.menu import Currency, ExtractedMenu
 from app.providers.factory import get_provider, resolve_provider_name
 from app.services.extraction import MenuExtractionService
 
@@ -96,13 +96,17 @@ def _handle_extraction_errors(exc: Exception, provider_name: str) -> HTTPExcepti
 async def extract_menu(
     file: Annotated[UploadFile, File(description="Menu image (jpg, png, webp)")],
     provider: Annotated[str | None, Query(description="Proveedor LLM a usar")] = None,
+    currency: Annotated[
+        Currency | None,
+        Query(description="Forzar moneda en la respuesta. Si se omite, se detecta de la imagen"),
+    ] = None,
     x_llm_provider: Annotated[str | None, Header()] = None,
 ) -> ExtractedMenu:
     requested = _resolve_provider(provider, x_llm_provider)
     service = _service_for(requested)
     content = await _read_upload(file)
     try:
-        return await service.extract_from_bytes(content, file.content_type)
+        return await service.extract_from_bytes(content, file.content_type, currency)
     except Exception as exc:
         raise _handle_extraction_errors(exc, service.provider_name) from exc
 
@@ -115,6 +119,10 @@ async def extract_menu(
 async def extract_menus_batch(
     files: Annotated[list[UploadFile], File(description="Menu images")],
     provider: Annotated[str | None, Query(description="Proveedor LLM a usar")] = None,
+    currency: Annotated[
+        Currency | None,
+        Query(description="Forzar moneda en la respuesta. Si se omite, se detecta de la imagen"),
+    ] = None,
     x_llm_provider: Annotated[str | None, Header()] = None,
 ) -> BatchExtractionResponse:
     if not files:
@@ -131,7 +139,7 @@ async def extract_menus_batch(
         payloads.append((content, file.content_type))
 
     try:
-        results = await service.extract_many(payloads)
+        results = await service.extract_many(payloads, currency)
     except Exception as exc:
         raise _handle_extraction_errors(exc, service.provider_name) from exc
     return BatchExtractionResponse(results=results)

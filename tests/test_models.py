@@ -18,6 +18,33 @@ def test_currency_values() -> None:
     assert Currency.UNKNOWN == "UNKNOWN"
 
 
+def test_currency_supports_latam_and_euro() -> None:
+    expected = {
+        "USD",
+        "EUR",
+        "ARS",
+        "BOB",
+        "BRL",
+        "CLP",
+        "COP",
+        "CRC",
+        "CUP",
+        "DOP",
+        "GTQ",
+        "HNL",
+        "HTG",
+        "MXN",
+        "NIO",
+        "PAB",
+        "PEN",
+        "PYG",
+        "UYU",
+        "VES",
+        "UNKNOWN",
+    }
+    assert {c.value for c in Currency} == expected
+
+
 def test_menu_item_minimal() -> None:
     item = MenuItem(name="Choripan")
     assert item.name == "Choripan"
