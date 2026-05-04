@@ -62,7 +62,7 @@ async def _read_upload(file: UploadFile) -> bytes:
     if not content:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El archivo enviado esta vacio",
+            detail="The sent file is empty",
         )
     return content
 
@@ -84,17 +84,17 @@ def _handle_extraction_errors(exc: Exception, provider_name: str) -> HTTPExcepti
     )
     return HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Error inesperado durante la extraccion",
+        detail="Unexpected error during extraction",
     )
 
 
 @router.post(
     "/extract",
     response_model=ExtractedMenu,
-    summary="Extrae el menu de una imagen",
+    summary="Extracts the menu from an image",
 )
 async def extract_menu(
-    file: Annotated[UploadFile, File(description="Imagen del menu (jpg, png, webp)")],
+    file: Annotated[UploadFile, File(description="Menu image (jpg, png, webp)")],
     provider: Annotated[str | None, Query(description="Proveedor LLM a usar")] = None,
     x_llm_provider: Annotated[str | None, Header()] = None,
 ) -> ExtractedMenu:
@@ -107,37 +107,37 @@ async def extract_menu(
         raise _handle_extraction_errors(exc, service.provider_name) from exc
 
 
-# @router.post(
-#     "/extract/batch",
-#     response_model=BatchExtractionResponse,
-#     summary="Extrae el menu de varias imagenes en paralelo",
-# )
-# async def extract_menus_batch(
-#     files: Annotated[list[UploadFile], File(description="Imagenes de menus")],
-#     provider: Annotated[str | None, Query(description="Proveedor LLM a usar")] = None,
-#     x_llm_provider: Annotated[str | None, Header()] = None,
-# ) -> BatchExtractionResponse:
-#     if not files:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Debe enviar al menos un archivo",
-#         )
-#     requested = _resolve_provider(provider, x_llm_provider)
-#     service = _service_for(requested)
+@router.post(
+    "/extract/batch",
+    response_model=BatchExtractionResponse,
+    summary="Extracts the menu from multiple images in parallel",
+)
+async def extract_menus_batch(
+    files: Annotated[list[UploadFile], File(description="Menu images")],
+    provider: Annotated[str | None, Query(description="Proveedor LLM a usar")] = None,
+    x_llm_provider: Annotated[str | None, Header()] = None,
+) -> BatchExtractionResponse:
+    if not files:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one file must be sent",
+        )
+    requested = _resolve_provider(provider, x_llm_provider)
+    service = _service_for(requested)
 
-#     payloads: list[tuple[bytes, str | None]] = []
-#     for file in files:
-#         content = await _read_upload(file)
-#         payloads.append((content, file.content_type))
+    payloads: list[tuple[bytes, str | None]] = []
+    for file in files:
+        content = await _read_upload(file)
+        payloads.append((content, file.content_type))
 
-#     try:
-#         results = await service.extract_many(payloads)
-#     except Exception as exc:
-#         raise _handle_extraction_errors(exc, service.provider_name) from exc
-#     return BatchExtractionResponse(results=results)
+    try:
+        results = await service.extract_many(payloads)
+    except Exception as exc:
+        raise _handle_extraction_errors(exc, service.provider_name) from exc
+    return BatchExtractionResponse(results=results)
 
 
-@health_router.get("/health", response_model=HealthResponse, summary="Estado del servicio")
+@health_router.get("/health", response_model=HealthResponse, summary="Service status")
 async def health() -> HealthResponse:
     settings = get_settings()
     return HealthResponse(
