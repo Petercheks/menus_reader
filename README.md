@@ -7,7 +7,7 @@ HTTP microservice that receives images of restaurant menus and returns structure
 - Stack: Python 3.11+, FastAPI, Pydantic v2.
 - Pluggable multi-provider LLM (OpenAI, Anthropic, Google Gemini).
 - Structured output validated with Pydantic.
-- Single or batch extraction support.
+- Single extraction or multi-image consolidation into one combined menu.
 - Image rescaling and validation.
 - Automatic retries with backoff.
 - Docker container ready.
@@ -50,12 +50,12 @@ docker run -p 8000:8000 --env-file .env menu-reader
 
 ## Endpoints
 
-| Method | Path                    | Description                                     |
-| ------ | ----------------------- | ----------------------------------------------- |
-| POST   | `/api/v1/extract`       | Processes an image and returns `ExtractedMenu`. |
-| POST   | `/api/v1/extract/batch` | Processes multiple images in parallel.          |
-| GET    | `/health`               | Service status and configured providers.        |
-| GET    | `/docs`                 | Swagger UI.                                     |
+| Method | Path                    | Description                                                                                                        |
+| ------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| POST   | `/api/v1/extract`       | Processes an image and returns `ExtractedMenu`.                                                                    |
+| POST   | `/api/v1/extract/batch` | Processes multiple images of the same establishment in parallel and returns a single consolidated `ExtractedMenu`. |
+| GET    | `/health`               | Service status and configured providers.                                                                           |
+| GET    | `/docs`                 | Swagger UI.                                                                                                        |
 
 ### Authentication
 
@@ -114,7 +114,13 @@ curl -X POST "http://localhost:8000/api/v1/extract?currency=ARS" \
     {
       "name": "Parrillas",
       "items": [
-        { "name": "Mix", "description": "Carne y Pollo, acompanado de yuca o bollito", "price": "4320", "currency": "VES", "variants": [] }
+        {
+          "name": "Mix",
+          "description": "Carne y Pollo, acompanado de yuca o bollito",
+          "price": "4320",
+          "currency": "VES",
+          "variants": []
+        }
       ]
     }
   ],

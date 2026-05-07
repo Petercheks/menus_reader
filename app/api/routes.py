@@ -33,10 +33,6 @@ class HealthResponse(BaseModel):
     configured_providers: list[ProviderName]
 
 
-class BatchExtractionResponse(BaseModel):
-    results: list[ExtractedMenu]
-
-
 def _resolve_provider(query: str | None, header: str | None) -> str | None:
     return query or header
 
@@ -113,18 +109,18 @@ async def extract_menu(
 
 @router.post(
     "/extract/batch",
-    response_model=BatchExtractionResponse,
-    summary="Extracts the menu from multiple images in parallel",
+    response_model=ExtractedMenu,
+    summary="Extracts a single combined menu from multiple images of the same establishment",
 )
 async def extract_menus_batch(
-    files: Annotated[list[UploadFile], File(description="Menu images")],
+    files: Annotated[list[UploadFile], File(description="Menu images of the same establishment")],
     provider: Annotated[str | None, Query(description="LLM provider to use")] = None,
     currency: Annotated[
         Currency | None,
         Query(description="Force currency in the response. If omitted, detected from the image"),
     ] = None,
     x_llm_provider: Annotated[str | None, Header()] = None,
-) -> BatchExtractionResponse:
+) -> ExtractedMenu:
     if not files:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -139,10 +135,9 @@ async def extract_menus_batch(
         payloads.append((content, file.content_type))
 
     try:
-        results = await service.extract_many(payloads, currency)
+        return await service.extract_combined(payloads, currency)
     except Exception as exc:
         raise _handle_extraction_errors(exc, service.provider_name) from exc
-    return BatchExtractionResponse(results=results)
 
 
 @health_router.get("/health", response_model=HealthResponse, summary="Service status")

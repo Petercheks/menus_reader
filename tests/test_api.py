@@ -152,7 +152,7 @@ def test_extract_rejects_invalid_api_key(client: TestClient, jpeg_upload: bytes)
     assert response.status_code == 401
 
 
-def test_batch_extract_returns_multiple(
+def test_batch_extract_returns_single_combined_menu(
     client: TestClient, fake_menu: ExtractedMenu, jpeg_upload: bytes
 ) -> None:
     with patch("app.providers.factory._cached") as cached:
@@ -172,7 +172,93 @@ def test_batch_extract_returns_multiple(
 
     assert response.status_code == 200
     body = response.json()
-    assert len(body["results"]) == 2
+    assert "results" not in body
+    assert body["metadata"]["restaurant_name"] == "Test Resto"
+    assert len(body["categories"]) == 1
+    assert body["categories"][0]["name"] == "Parrillas"
+    assert len(body["categories"][0]["items"]) == 1
+    assert len(body["promotions"]) == 1
+
+
+def test_batch_extract_merges_distinct_views(
+    client: TestClient, jpeg_upload: bytes
+) -> None:
+    front_menu = ExtractedMenu(
+        metadata=MenuMetadata(
+            restaurant_name="All Grill",
+            phone="0424.000.00.00",
+            payment_methods=["Pago Movil"],
+        ),
+        categories=[
+            Category(
+                name="Parrillas",
+                items=[MenuItem(name="Mix", price=4320, currency=Currency.VES)],
+            )
+        ],
+        promotions=[
+            Promotion(
+                name="Combo Doble",
+                includes=["2 Jumbos"],
+                price=2700,
+                currency=Currency.VES,
+            )
+        ],
+    )
+    back_menu = ExtractedMenu(
+        metadata=MenuMetadata(
+            restaurant_name="All Grill",
+            payment_methods=["Pago Movil", "Bancamiga"],
+        ),
+        categories=[
+            Category(
+                name="parrillas",
+                items=[MenuItem(name="Pollo", price=2500, currency=Currency.VES)],
+            ),
+            Category(
+                name="Bebidas",
+                items=[MenuItem(name="Refresco", price=500, currency=Currency.VES)],
+            ),
+        ],
+        promotions=[
+            Promotion(
+                name="Combo Familiar",
+                includes=["1 Pollo", "1 Refresco"],
+                price=3200,
+                currency=Currency.VES,
+            )
+        ],
+        notes="Promos solo los fines de semana",
+    )
+
+    with patch("app.providers.factory._cached") as cached:
+        provider = AsyncMock()
+        provider.name = "openai"
+        provider.extract = AsyncMock(side_effect=[front_menu, back_menu])
+        cached.return_value = provider
+
+        response = client.post(
+            "/api/v1/extract/batch",
+            files=[
+                ("files", ("front.jpg", jpeg_upload, "image/jpeg")),
+                ("files", ("back.jpg", jpeg_upload, "image/jpeg")),
+            ],
+            headers=AUTH_HEADERS,
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["metadata"]["restaurant_name"] == "All Grill"
+    assert body["metadata"]["phone"] == "0424.000.00.00"
+    assert body["metadata"]["payment_methods"] == ["Pago Movil", "Bancamiga"]
+
+    categories = {category["name"]: category for category in body["categories"]}
+    assert set(categories) == {"Parrillas", "Bebidas"}
+    grilled_items = {item["name"] for item in categories["Parrillas"]["items"]}
+    assert grilled_items == {"Mix", "Pollo"}
+
+    promotion_names = {promo["name"] for promo in body["promotions"]}
+    assert promotion_names == {"Combo Doble", "Combo Familiar"}
+    assert body["notes"] == "Promos solo los fines de semana"
 
 
 def test_extract_overrides_currency_when_provided(
@@ -248,6 +334,7 @@ def test_batch_extract_overrides_currency(
 
     assert response.status_code == 200
     body = response.json()
-    for result in body["results"]:
-        assert result["promotions"][0]["currency"] == "USD"
-        assert result["categories"][0]["items"][0]["currency"] == "USD"
+    assert body["promotions"][0]["currency"] == "USD"
+    assert body["categories"][0]["items"][0]["currency"] == "USD"
+    for variant in body["categories"][0]["items"][0]["variants"]:
+        assert variant["currency"] == "USD"

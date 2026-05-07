@@ -37,6 +37,7 @@ select = ["E", "F", "W", "I", "B", "UP", "N"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+pythonpath = ["."]
 markers = [
     "live: requires real API keys and connection to the LLM providers",
 ]
